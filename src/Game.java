@@ -3,25 +3,46 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.HashMap;
 
 public class Game extends Canvas {
     GameField game_field;
     static public final int
             OFFSET_X = 150,
             OFFSET_Y = 100,
-            CELL_SIZE = 50;
+            CELL_SIZE = 50,
+            BORDER_WIDTH = 2,
+            BW = BORDER_WIDTH,
+            BW2 = BORDER_WIDTH * 2;
+
+    static public final HashMap<Integer, int[]> ARROW_KEYS
+            = new HashMap<>();
+
+    static {
+        ARROW_KEYS.put(37, new int[]{0, -1}); //LEFT
+        ARROW_KEYS.put(38, new int[]{-1, 0}); //UP
+        ARROW_KEYS.put(39, new int[]{0, 1}); //RIGHT
+        ARROW_KEYS.put(40, new int[]{1, 0}); //BOTTOM
+    }
 
     public void keyListener(KeyEvent ke) {
         Integer cell = game_field.selected_cell;
-        System.out.println(cell + " ...");
         char ch = ke.getKeyChar();
         if (cell != null) {
             int y = cell % GameField.SIZE;
             int x = cell / GameField.SIZE;
-            System.out.println(x + " " + y + " " + ch);
+            int[] maybe_direction_change = ARROW_KEYS.get(ke.getKeyCode());
+            // writes number
             if (Character.isDigit(ch) && ch != '0') {
-                game_field.game_field[x][y].value = ((int) ch - (int)'0');
-            }else{
+                game_field.game_field[x][y].value = ((int) ch - (int) '0');
+            } // moves the currently highlighted cell
+            else if (maybe_direction_change != null) {
+                game_field.game_field[x][y].is_selected = false;
+                x = Math.min(GameField.SIZE - 1, Math.max(0, x + maybe_direction_change[0]));
+                y = Math.min(GameField.SIZE - 1, Math.max(0, y + maybe_direction_change[1]));
+                game_field.game_field[x][y].is_selected = true;
+                game_field.selected_cell = x * GameField.SIZE + y;
+            } else {
                 game_field.game_field[x][y].value = null;
             }
 
@@ -101,28 +122,36 @@ public class Game extends Canvas {
                 if (c != null) {
                     if (c.is_selected) {
                         g.setColor(new Color(255, 0, 0, 50));
-                        g.fillRect(OFFSET_X + j * CELL_SIZE + 2,
-                                OFFSET_Y + i * CELL_SIZE + 2,
-                                CELL_SIZE - 2, CELL_SIZE - 2);
+                        g.fillRect(OFFSET_X + j * CELL_SIZE + BW2,
+                                OFFSET_Y + i * CELL_SIZE + BW2,
+                                CELL_SIZE - BW2, CELL_SIZE - BW2);
                     }
                     if (c.value != null) {
                         g.setColor(Color.BLACK);
                         g.setFont(new Font("Calibri", Font.PLAIN, 40));
                         g.drawString(String.valueOf(c.value),
-                                OFFSET_X + j * CELL_SIZE + 2 + CELL_SIZE * 31 / 100,
-                                OFFSET_Y + i * CELL_SIZE + 2 + CELL_SIZE * 74 / 100);
+                                OFFSET_X + j * CELL_SIZE + BW + CELL_SIZE * 31 / 100,
+                                OFFSET_Y + i * CELL_SIZE + BW + CELL_SIZE * 74 / 100);
                     }
                 }
                 g.setColor(Color.BLACK);
-                g.drawRect(OFFSET_X + j * CELL_SIZE + 2,
-                        OFFSET_Y + i * CELL_SIZE + 2,
-                        CELL_SIZE - 2, CELL_SIZE - 2);
+                g.drawRect(OFFSET_X + j * CELL_SIZE + BW2,
+                        OFFSET_Y + i * CELL_SIZE + BW2,
+                        CELL_SIZE - BW2, CELL_SIZE - BW2);
             }
+    }
+
+    static public void paintSquareBorders(Graphics g) {
+        g.setColor(Color.BLACK);
+        for (int i : new int[]{1, 2}) { // depends on GameField.SIZE as well
+            g.fillRect(OFFSET_X + 3 * i * CELL_SIZE + 1, OFFSET_Y + BW2 - 2, BW2 - 1, GameField.SIZE * CELL_SIZE - BW2 + 5);
+            g.fillRect(OFFSET_X + BW2 - 2, OFFSET_Y + 3 * i * CELL_SIZE + 1, GameField.SIZE * CELL_SIZE - BW2 + 5, BW2 - 1);
+        }
     }
 
     @Override
     public void paint(Graphics g) {
-        g.setColor(Color.BLACK);
         paintGameField(g);
+        paintSquareBorders(g);
     }
 }
