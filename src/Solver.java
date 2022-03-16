@@ -1,7 +1,4 @@
-import javax.imageio.plugins.jpeg.JPEGHuffmanTable;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 public class Solver {
 
